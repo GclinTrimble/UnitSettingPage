@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Settings Manager - Enhanced</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+        }
+        .settings-card {
+            background-color: white;
+            border-radius: 0.5rem; /* Tailwind rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* Tailwind shadow-md */
+            padding: 1.5rem; /* Tailwind p-6 */
+            margin-bottom: 1.5rem;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(1, minmax(0, 1fr)); /* Default to 1 column */
+            gap: 1rem; /* Tailwind gap-4 */
+        }
+        @media (min-width: 768px) { /* Tailwind md breakpoint */
+            .settings-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr)); /* 2 columns on medium screens and up */
+            }
+        }
+         @media (min-width: 1024px) { /* Tailwind lg breakpoint */
+            .settings-grid.three-col { /* Custom class for 3 columns on large screens */
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+        label {
+            display: block;
+            margin-bottom: 0.25rem; /* Tailwind mb-1 */
+            font-weight: 500; /* Tailwind font-medium */
+            color: #374151; /* Tailwind gray-700 */
+        }
+        select, input[type="text"] {
+            width: 100%;
+            padding: 0.5rem 0.75rem; /* Tailwind px-3 py-2 */
+            border: 1px solid #D1D5DB; /* Tailwind border-gray-300 */
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            box-shadow: inset 0 1px 2px 0 rgba(0,0,0,0.05); /* Tailwind shadow-sm */
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+        select:focus, input[type="text"]:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            border-color: #6366F1; /* Tailwind indigo-500 */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3); /* Tailwind ring-indigo-500 ring-opacity-30 */
+        }
+        .btn {
+            padding: 0.625rem 1.25rem; /* Tailwind px-5 py-2.5 */
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            font-weight: 500; /* Tailwind font-medium */
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-primary {
+            background-color: #4F46E5; /* Tailwind indigo-600 */
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #4338CA; /* Tailwind indigo-700 */
+        }
+        .btn-secondary {
+            background-color: #E5E7EB; /* Tailwind gray-200 */
+            color: #374151; /* Tailwind gray-700 */
+            border: 1px solid #D1D5DB; /* Tailwind border-gray-300 */
+        }
+        .btn-secondary:hover {
+            background-color: #D1D5DB; /* Tailwind gray-300 */
+        }
+        .btn-preset {
+            background-color: white;
+            color: #374151; /* Tailwind gray-700 */
+            border: 1px solid #D1D5DB; /* Tailwind border-gray-300 */
+        }
+        .btn-preset.active, .btn-preset:hover {
+            background-color: #EEF2FF; /* Tailwind indigo-50 */
+            border-color: #6366F1; /* Tailwind indigo-500 */
+            color: #4F46E5; /* Tailwind indigo-600 */
+        }
+
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .modal-content h3 {
+            font-size: 1.25rem; /* Tailwind text-xl */
+            font-weight: 600; /* Tailwind font-semibold */
+            margin-bottom: 1rem;
+        }
+        .modal-content p {
+            margin-bottom: 1.5rem;
+            color: #4B5563; /* Tailwind gray-600 */
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-5xl mx-auto">
+        <header class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Unit Settings Manager</h1>
+            <p class="text-sm text-gray-600">User ID: <span id="userIdDisplay" class="font-mono">Loading...</span></p>
+        </header>
+
+        <div class="settings-card">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Presets</h2>
+            <div class="settings-grid three-col">
+                <div>
+                    <label for="measurementPreset">Units of Measurement</label>
+                    <div class="flex space-x-2 mt-1">
+                        <button id="presetMetric" data-preset-type="measurement" data-preset-value="Metric" class="btn btn-preset flex-1">Metric</button>
+                        <button id="presetImperial" data-preset-type="measurement" data-preset-value="Imperial" class="btn btn-preset flex-1">Imperial</button>
+                    </div>
+                </div>
+                <div>
+                    <label for="regionPreset">Region / Country</label>
+                    <select id="regionPreset" class="mt-1">
+                        <option value="">-- Select Region --</option>
+                        <option value="NZ">New Zealand</option>
+                        <option value="US">United States</option>
+                        <option value="GB">United Kingdom</option>
+                        <option value="CA">Canada</option>
+                        <option value="AU">Australia</option>
+                        <option value="JP">Japan</option>
+                        <option value="EU">Eurozone</option>
+                        </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">General Units</h2>
+            <div class="settings-grid">
+                <div>
+                    <label for="distance">Distance & Grid Coords</label>
+                    <select id="distance">
+                        <option value="Meters">Meters (m)</option>
+                        <option value="Centimeters">Centimeters (cm)</option>
+                        <option value="Millimeters">Millimeters (mm)</option>
+                        <option value="Kilometers">Kilometers (km)</option>
+                        <option value="Feet">Feet (ft)</option>
+                        <option value="USSurveyFeet">US Survey Feet (ftUS)</option>
+                        <option value="Inches">Inches (in)</option>
+                        <option value="Yards">Yards (yd)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="height">Height</label>
+                    <select id="height">
+                        <option value="Meters">Meters (m)</option>
+                        <option value="Centimeters">Centimeters (cm)</option>
+                        <option value="Millimeters">Millimeters (mm)</option>
+                        <option value="Kilometers">Kilometers (km)</option>
+                        <option value="Feet">Feet (ft)</option>
+                        <option value="USSurveyFeet">US Survey Feet (ftUS)</option>
+                        <option value="Inches">Inches (in)</option>
+                        <option value="Yards">Yards (yd)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="angleFormat">Angles</label>
+                    <select id="angleFormat">
+                        <option value="DDD.MMSS">DDD.MMSS</option>
+                        <option value="DecimalDegrees">Decimal Degrees</option>
+                        <option value="Grads">Grads / Gons</option>
+                        <option value="Mils">Mils (6400)</option>
+                        <option value="Radians">Radians</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="temperature">Temperature</label>
+                    <select id="temperature">
+                        <option value="Celsius">Celsius (°C)</option>
+                        <option value="Fahrenheit">Fahrenheit (°F)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="pressure">Pressure</label>
+                    <select id="pressure">
+                        <option value="Millibar">Millibar / hPa</option>
+                        <option value="kPa">Kilopascals (kPa)</option>
+                        <option value="PSI">Pounds per Square Inch (PSI)</option>
+                        <option value="InchesHg">Inches of Mercury (inHg)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="grade">Grade</label>
+                    <select id="grade">
+                        <option value="Percent">Percent (%)</option>
+                        <option value="Ratio">Ratio (1:X)</option>
+                        <option value="Degrees">Degrees (°)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="area">Area</label>
+                    <select id="area">
+                        <option value="SquareMeters">Square Meters (m²)</option>
+                        <option value="Hectares">Hectares (ha)</option>
+                        <option value="SquareKilometers">Square Kilometers (km²)</option>
+                        <option value="SquareFeet">Square Feet (ft²)</option>
+                        <option value="Acres">Acres</option>
+                        <option value="SquareMiles">Square Miles (mi²)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="volume">Volume</label>
+                    <select id="volume">
+                        <option value="CubicMeters">Cubic Meters (m³)</option>
+                        <option value="Liters">Liters (L)</option>
+                        <option value="CubicFeet">Cubic Feet (ft³)</option>
+                        <option value="GallonsUS">US Gallons (gal)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="mass">Mass</label>
+                    <select id="mass">
+                        <option value="Kilograms">Kilograms (kg)</option>
+                        <option value="Grams">Grams (g)</option>
+                        <option value="TonnesMetric">Metric Tonnes (t)</option>
+                        <option value="Pounds">Pounds (lb)</option>
+                        <option value="TonsUS">US Tons (ton)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="currency">Currency</label>
+                    <select id="currency">
+                        <option value="USD">US Dollar (USD)</option>
+                        <option value="EUR">Euro (EUR)</option>
+                        <option value="GBP">British Pound (GBP)</option>
+                        <option value="NZD">New Zealand Dollar (NZD)</option>
+                        <option value="AUD">Australian Dollar (AUD)</option>
+                        <option value="CAD">Canadian Dollar (CAD)</option>
+                        <option value="JPY">Japanese Yen (JPY)</option>
+                        <option value="CHF">Swiss Franc (CHF)</option>
+                        <option value="CNY">Chinese Yuan (CNY)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Surveying Specific (for XML Export)</h2>
+            <div class="settings-grid">
+                <div>
+                    <label for="stationing">Stationing Format</label>
+                    <select id="stationing">
+                        <option value="10+000">10+000</option>
+                        <option value="1000.00">1000.00</option>
+                        <option value="1+000.00_SCS">1+000.00 (SCS)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="coordinateOrder">Coordinate Order</label>
+                    <select id="coordinateOrder">
+                        <option value="North-East-Elev">North-East-Elevation</option>
+                        <option value="East-North-Elev">East-North-Elevation</option>
+                        <option value="X-Y-Z">X-Y-Z</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="azimuth">Azimuth Definition</label>
+                    <select id="azimuth">
+                        <option value="NorthAzimuth">North Azimuth</option>
+                        <option value="SouthAzimuth">South Azimuth</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="gridDirection">Grid Direction (Azimuth Ref)</label>
+                    <select id="gridDirection">
+                        <option value="ToGridNorth">To Grid North</option>
+                        <option value="FromGridNorthIncN">From Grid North (Increasing N)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+            <button id="saveSettings" class="btn btn-primary">Save All Settings</button>
+            <button id="exportXml" class="btn btn-secondary">Export Surveying to XML</button>
+        </div>
+    </div>
+
+    <div id="notificationModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="modalTitle">Notification</h3>
+            <p id="modalMessage">Message goes here.</p>
+            <button id="modalCloseButton" class="btn btn-primary">OK</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Configuration (Provided by Canvas Environment) ---
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // --- Firebase Initialization ---
+        let app;
+        let auth;
+        let db;
+        let currentUserId = null;
+        let settingsDocRef = null;
+        let unsubscribeSettings = null;
+
+        // --- UI Elements ---
+        const uiElements = {
+            // Presets
+            presetMetricBtn: document.getElementById('presetMetric'),
+            presetImperialBtn: document.getElementById('presetImperial'),
+            regionPresetSelect: document.getElementById('regionPreset'),
+            // General Units
+            distance: document.getElementById('distance'),
+            height: document.getElementById('height'),
+            angleFormat: document.getElementById('angleFormat'),
+            temperature: document.getElementById('temperature'),
+            pressure: document.getElementById('pressure'),
+            grade: document.getElementById('grade'),
+            area: document.getElementById('area'),
+            volume: document.getElementById('volume'),
+            mass: document.getElementById('mass'),
+            currency: document.getElementById('currency'),
+            // Surveying Specific
+            stationing: document.getElementById('stationing'),
+            coordinateOrder: document.getElementById('coordinateOrder'),
+            azimuth: document.getElementById('azimuth'),
+            gridDirection: document.getElementById('gridDirection'),
+            // Action Buttons & Info
+            saveSettingsBtn: document.getElementById('saveSettings'),
+            exportXmlBtn: document.getElementById('exportXml'),
+            userIdDisplay: document.getElementById('userIdDisplay'),
+            // Modal
+            notificationModal: document.getElementById('notificationModal'),
+            modalTitle: document.getElementById('modalTitle'),
+            modalMessage: document.getElementById('modalMessage'),
+            modalCloseButton: document.getElementById('modalCloseButton'),
+        };
+        
+        // --- Default Settings ---
+        const baseDefaultSettings = {
+            // Presets
+            activeMeasurementPreset: null, // 'Metric', 'Imperial', or null
+            activeRegionPreset: '', // e.g., 'NZ', 'US', or ''
+            // General Units
+            distance: "Meters", height: "Meters", angleFormat: "DDD.MMSS",
+            temperature: "Celsius", pressure: "Millibar", grade: "Percent",
+            area: "SquareMeters", volume: "CubicMeters", mass: "Kilograms", currency: "USD",
+            // Surveying Specific
+            stationing: "1+000.00_SCS", coordinateOrder: "North-East-Elev",
+            azimuth: "NorthAzimuth", gridDirection: "FromGridNorthIncN"
+        };
+
+        // --- Preset Definitions ---
+        const measurementSystemPresets = {
+            "Metric": {
+                distance: "Meters", height: "Meters", temperature: "Celsius",
+                pressure: "Millibar", area: "SquareMeters", volume: "CubicMeters", mass: "Kilograms",
+            },
+            "Imperial": {
+                distance: "Feet", height: "Feet", temperature: "Fahrenheit",
+                pressure: "PSI", area: "SquareFeet", volume: "CubicFeet", mass: "Pounds",
+            }
+        };
+
+        const regionPresets = {
+            "NZ": { // New Zealand
+                distance: "Meters", height: "Meters", temperature: "Celsius", currency: "NZD",
+                pressure: "Millibar", area: "Hectares", volume: "Liters", mass: "Kilograms",
+                angleFormat: "DDD.MMSS", 
+            },
+            "US": { // United States
+                distance: "USSurveyFeet", height: "USSurveyFeet", temperature: "Fahrenheit", currency: "USD",
+                pressure: "PSI", area: "Acres", volume: "GallonsUS", mass: "Pounds",
+                angleFormat: "DDD.MMSS", 
+            },
+            "GB": { // United Kingdom
+                distance: "Meters", height: "Meters", temperature: "Celsius", currency: "GBP", // Mixed common usage
+                pressure: "Millibar", area: "Hectares", volume: "Liters", mass: "Kilograms",
+                angleFormat: "DDD.MMSS", 
+            },
+            "CA": { // Canada
+                distance: "Meters", height: "Meters", temperature: "Celsius", currency: "CAD",
+                pressure: "kPa", area: "Hectares", volume: "Liters", mass: "Kilograms",
+                angleFormat: "DDD.MMSS",
+            },
+            "AU": { // Australia
+                distance: "Meters", height: "Meters", temperature: "Celsius", currency: "AUD",
+                pressure: "Millibar", area: "Hectares", volume: "Liters", mass: "Kilograms",
+                angleFormat: "DDD.MMSS",
+            },
+            "JP": { // Japan
+                distance: "Meters", height: "Meters", temperature: "Celsius", currency: "JPY",
+                pressure: "Millibar", area: "SquareMeters", volume: "Liters", mass: "Kilograms",
+                angleFormat: "DecimalDegrees",
+            },
+            "EU": { // Eurozone (general metric)
+                distance: "Meters", height: "Meters", temperature: "Celsius", currency: "EUR",
+                pressure: "Millibar", area: "Hectares", volume: "Liters", mass: "Kilograms",
+                angleFormat: "Grads", // Grads are common in some parts of Europe for surveying
+            }
+        };
+
+        // --- XML Value Mappings (for SCS900Settings schema) ---
+        const xmlValueMappings = {
+            distance: { "Meters": 0, "Feet": 1, "USSurveyFeet": 1, "Inches": 1, "Centimeters": 0, "Millimeters": 0, "Kilometers": 0, "Yards": 1 }, // Best effort mapping
+            angleFormat: { "DDD.MMSS": 0, "DecimalDegrees": 1, "Grads": 2, "Mils": 0, "Radians": 0 }, // Best effort mapping
+            stationing: { "10+000": 0, "1000.00": 1, "1+000.00_SCS": 2 },
+            coordinateOrder: { "North-East-Elev": 0, "East-North-Elev": 1, "X-Y-Z": 2 },
+            azimuth: { "NorthAzimuth": 0, "SouthAzimuth": 1 },
+            gridDirection: { "ToGridNorth": 0, "FromGridNorthIncN": 1 }
+        };
+
+        // --- Helper Functions ---
+        function showNotification(title, message) {
+            uiElements.modalTitle.textContent = title;
+            uiElements.modalMessage.textContent = message;
+            uiElements.notificationModal.classList.add('active');
+        }
+
+        function hideNotification() {
+            uiElements.notificationModal.classList.remove('active');
+        }
+        
+        function updateMeasurementPresetButtons(activePreset) {
+            uiElements.presetMetricBtn.classList.toggle('active', activePreset === 'Metric');
+            uiElements.presetImperialBtn.classList.toggle('active', activePreset === 'Imperial');
+        }
+
+        // --- Firebase Functions ---
+        async function initializeFirebase() {
+            if (!firebaseConfig) {
+                console.error("Firebase configuration is missing.");
+                showNotification("Error", "Firebase configuration is missing. Cannot connect.");
+                uiElements.userIdDisplay.textContent = "Error: Firebase not configured";
+                return;
+            }
+            try {
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                // com.google.firebase.firestore.setLogLevel('debug'); // For verbose logging if needed
+
+                await setPersistence(auth, browserLocalPersistence);
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        currentUserId = user.uid;
+                        uiElements.userIdDisplay.textContent = currentUserId;
+                        settingsDocRef = doc(db, "artifacts", appId, "users", currentUserId, "preferences", "unitSettingsDoc");
+                        loadSettings(); 
+                        attachSettingsListener();
+                    } else {
+                        await signInUser();
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase initialization error:", error);
+                showNotification("Firebase Error", `Failed to initialize Firebase: ${error.message}`);
+                uiElements.userIdDisplay.textContent = "Error: Firebase init failed";
+            }
+        }
+
+        async function signInUser() {
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Authentication error:", error);
+                currentUserId = `anon-${crypto.randomUUID()}`; 
+                uiElements.userIdDisplay.textContent = `${currentUserId} (Offline)`;
+                showNotification("Authentication Error", `Could not sign in: ${error.message}. Using temporary offline ID.`);
+                settingsDocRef = doc(db, "artifacts", appId, "users", currentUserId, "preferences", "unitSettingsDoc");
+                updateUI(baseDefaultSettings); // Use base defaults if auth fails and no local data
+            }
+        }
+        
+        function updateUI(settings) {
+            for (const key in uiElements) {
+                if (uiElements[key] && uiElements[key].tagName === 'SELECT' && settings[key] !== undefined) {
+                    uiElements[key].value = settings[key];
+                }
+            }
+            // Update preset UI
+            updateMeasurementPresetButtons(settings.activeMeasurementPreset);
+            if (uiElements.regionPresetSelect && settings.activeRegionPreset !== undefined) {
+                 uiElements.regionPresetSelect.value = settings.activeRegionPreset;
+            }
+        }
+
+        async function loadSettings() {
+            if (!settingsDocRef) {
+                console.warn("SettingsDocRef not available for loading settings. Using base defaults.");
+                updateUI(baseDefaultSettings);
+                return;
+            }
+            try {
+                const docSnap = await getDoc(settingsDocRef);
+                if (docSnap.exists()) {
+                    const loadedData = docSnap.data();
+                    console.log("Settings loaded from Firestore:", loadedData);
+                    // Merge with defaults to ensure all fields are present if schema changed
+                    const mergedSettings = { ...baseDefaultSettings, ...loadedData };
+                    updateUI(mergedSettings);
+                } else {
+                    console.log("No settings found in Firestore, using base default settings.");
+                    updateUI(baseDefaultSettings);
+                    // Optionally save base default settings to Firestore for new users
+                    // await saveCurrentSettings(baseDefaultSettings, false); 
+                }
+            } catch (error) {
+                console.error("Error loading settings:", error);
+                showNotification("Error", `Failed to load settings: ${error.message}. Using defaults.`);
+                updateUI(baseDefaultSettings);
+            }
+        }
+
+        function attachSettingsListener() {
+            if (unsubscribeSettings) unsubscribeSettings();
+            if (!settingsDocRef) {
+                console.warn("Cannot attach listener: settingsDocRef is not initialized.");
+                return;
+            }
+            unsubscribeSettings = onSnapshot(settingsDocRef, (doc) => {
+                if (doc.exists()) {
+                    const liveData = doc.data();
+                    console.log("Real-time update from Firestore:", liveData);
+                    const mergedSettings = { ...baseDefaultSettings, ...liveData };
+                    updateUI(mergedSettings);
+                } else {
+                    console.log("Settings document deleted or does not exist, using base defaults.");
+                    updateUI(baseDefaultSettings);
+                }
+            }, (error) => {
+                console.error("Error in onSnapshot listener:", error);
+                showNotification("Real-time Error", `Error listening for settings updates: ${error.message}`);
+            });
+        }
+        
+        function applyPreset(presetKey, presetType) {
+            let presetData = {};
+            let newActiveMeasurementPreset = uiElements.presetMetricBtn.classList.contains('active') ? 'Metric' : (uiElements.presetImperialBtn.classList.contains('active') ? 'Imperial' : null);
+            let newActiveRegionPreset = uiElements.regionPresetSelect.value;
+
+            if (presetType === "measurement") {
+                presetData = measurementSystemPresets[presetKey] || {};
+                newActiveMeasurementPreset = presetKey;
+                newActiveRegionPreset = ''; // Clear region preset if measurement system is chosen
+                uiElements.regionPresetSelect.value = ''; 
+            } else if (presetType === "region") {
+                presetData = regionPresets[presetKey] || {};
+                newActiveRegionPreset = presetKey;
+                newActiveMeasurementPreset = null; // Clear measurement preset if region is chosen
+            }
+            
+            // Get current settings to merge with preset
+            const currentSettings = getCurrentUiSettings();
+            const updatedSettings = { ...currentSettings, ...presetData, activeMeasurementPreset: newActiveMeasurementPreset, activeRegionPreset: newActiveRegionPreset };
+            
+            updateUI(updatedSettings); // Update UI immediately
+            updateMeasurementPresetButtons(newActiveMeasurementPreset); // Explicitly update buttons
+            // saveCurrentSettings(updatedSettings, false); // Save after applying preset
+        }
+
+        function getCurrentUiSettings() {
+            const settings = {};
+            for (const key in uiElements) {
+                if (uiElements[key] && (uiElements[key].tagName === 'SELECT')) {
+                    settings[key] = uiElements[key].value;
+                }
+            }
+            // Include preset states
+            settings.activeMeasurementPreset = uiElements.presetMetricBtn.classList.contains('active') ? 'Metric' : (uiElements.presetImperialBtn.classList.contains('active') ? 'Imperial' : null);
+            settings.activeRegionPreset = uiElements.regionPresetSelect.value;
+            return settings;
+        }
+
+
+        async function saveCurrentSettings(settingsToSave = null, showSuccessNotification = true) {
+            if (!settingsDocRef) {
+                showNotification("Error", "Cannot save: User not authenticated or Firestore not ready.");
+                return;
+            }
+
+            const dataToSave = settingsToSave ? settingsToSave : getCurrentUiSettings();
+            
+            try {
+                await setDoc(settingsDocRef, dataToSave, { merge: true }); // Use merge to avoid overwriting fields not in UI
+                console.log("Settings saved to Firestore:", dataToSave);
+                if (showSuccessNotification) {
+                    showNotification("Success", "Settings saved successfully!");
+                }
+            } catch (error) {
+                console.error("Error saving settings:", error);
+                showNotification("Error", `Failed to save settings: ${error.message}`);
+            }
+        }
+
+        function generateXml() {
+            const currentSettings = getCurrentUiSettings();
+            let xmlString = '<SCS900Settings>\n  <group>\n    <name>Units</name>\n';
+            const settingsForXml = [
+                { keyName: "Distance", uiKey: "distance" }, { keyName: "Angle", uiKey: "angleFormat" },
+                { keyName: "Stationing", uiKey: "stationing" }, { keyName: "CoordinateOrder", uiKey: "coordinateOrder" },
+                { keyName: "Azimuth", uiKey: "azimuth" }, { keyName: "GridDirection", uiKey: "gridDirection" }
+            ];
+
+            settingsForXml.forEach(item => {
+                const userSelection = currentSettings[item.uiKey]; // e.g., "Meters", "DDD.MMSS"
+                const valueMapCategory = xmlValueMappings[item.uiKey]; // e.g., xmlValueMappings.distance
+                let xmlValue = "0"; // Default
+
+                if (valueMapCategory && valueMapCategory[userSelection] !== undefined) {
+                    xmlValue = valueMapCategory[userSelection];
+                } else {
+                    console.warn(`XML mapping for ${item.keyName} ('${userSelection}') not found or not applicable. Defaulting to 0.`);
+                    // Attempt to find a fallback if the category exists but the specific value doesn't
+                    if (valueMapCategory) { 
+                        const firstKey = Object.keys(valueMapCategory)[0];
+                        if (firstKey) xmlValue = valueMapCategory[firstKey]; // Default to the first available mapping's value
+                    }
+                }
+                
+                xmlString += `    <setting>\n`;
+                xmlString += `      <key>${item.keyName}</key>\n`;
+                xmlString += `      <group>Units</group>\n`;
+                xmlString += `      <value>${xmlValue}</value>\n`;
+                xmlString += `      <type>System.Int32</type>\n`;
+                xmlString += `    </setting>\n`;
+            });
+            xmlString += '  </group>\n</SCS900Settings>';
+            return xmlString;
+        }
+
+        function downloadXml(filename, text) {
+            const element = document.createElement('a');
+            element.setAttribute('href', 'data:text/xml;charset=utf-8,' + encodeURIComponent(text));
+            element.setAttribute('download', filename);
+            element.style.display = 'none';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+            showNotification("Success", "Surveying XML file exported!");
+        }
+
+        // --- Event Listeners ---
+        uiElements.presetMetricBtn.addEventListener('click', () => applyPreset('Metric', 'measurement'));
+        uiElements.presetImperialBtn.addEventListener('click', () => applyPreset('Imperial', 'measurement'));
+        uiElements.regionPresetSelect.addEventListener('change', (e) => {
+            if (e.target.value) {
+                applyPreset(e.target.value, 'region');
+            } else { // "-- Select Region --" chosen
+                // Optionally clear measurement preset or do nothing
+                updateMeasurementPresetButtons(null); 
+                // Potentially save this "no active region" state
+                const currentSettings = getCurrentUiSettings();
+                currentSettings.activeRegionPreset = '';
+                updateUI(currentSettings); // Reflect clearing in UI
+            }
+        });
+
+        uiElements.saveSettingsBtn.addEventListener('click', () => saveCurrentSettings(null, true));
+        uiElements.exportXmlBtn.addEventListener('click', () => {
+            const xmlData = generateXml();
+            downloadXml('SCS900Settings.xml', xmlData);
+        });
+        uiElements.modalCloseButton.addEventListener('click', hideNotification);
+
+        // --- Initialize ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeFirebase();
+        });
+    </script>
+</body>
+</html>
