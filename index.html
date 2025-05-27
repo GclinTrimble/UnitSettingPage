@@ -160,7 +160,7 @@
         </div>
 
         <div class="settings-card">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">General Units</h2>
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">General Units (for XML Export and App Use)</h2>
             <div class="settings-grid">
                 <div>
                     <label for="distance">Distance & Grid Coords</label>
@@ -270,7 +270,7 @@
         </div>
 
         <div class="settings-card">
-            <h2 class="text-xl font-semibold text-gray-700 mb-4">Surveying Specific (for XML Export)</h2>
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">Surveying Specific (Integer-coded for XML)</h2>
             <div class="settings-grid">
                 <div>
                     <label for="stationing">Stationing Format</label>
@@ -307,7 +307,7 @@
 
         <div class="mt-8 flex flex-col sm:flex-row sm:justify-end space-y-3 sm:space-y-0 sm:space-x-3">
             <button id="saveSettings" class="btn btn-primary">Save All Settings</button>
-            <button id="exportXml" class="btn btn-secondary">Export Surveying to XML</button>
+            <button id="exportXml" class="btn btn-secondary">Export All to XML</button>
         </div>
     </div>
 
@@ -374,13 +374,13 @@
         // --- Default Settings ---
         const baseDefaultSettings = {
             // Presets
-            activeMeasurementPreset: null, // 'Metric', 'Imperial', or null
-            activeRegionPreset: '', // e.g., 'NZ', 'US', or ''
+            activeMeasurementPreset: null, 
+            activeRegionPreset: '', 
             // General Units
             distance: "Meters", height: "Meters", angleFormat: "DDD.MMSS",
             temperature: "Celsius", pressure: "Millibar", grade: "Percent",
             area: "SquareMeters", volume: "CubicMeters", mass: "Kilograms", currency: "USD",
-            // Surveying Specific
+            // Surveying Specific (integer-coded for XML)
             stationing: "1+000.00_SCS", coordinateOrder: "North-East-Elev",
             azimuth: "NorthAzimuth", gridDirection: "FromGridNorthIncN"
         };
@@ -398,51 +398,52 @@
         };
 
         const regionPresets = {
-            "NZ": { // New Zealand
+            "NZ": { 
                 distance: "Meters", height: "Meters", temperature: "Celsius", currency: "NZD",
                 pressure: "Millibar", area: "Hectares", volume: "Liters", mass: "Kilograms",
                 angleFormat: "DDD.MMSS", 
             },
-            "US": { // United States
+            "US": { 
                 distance: "USSurveyFeet", height: "USSurveyFeet", temperature: "Fahrenheit", currency: "USD",
                 pressure: "PSI", area: "Acres", volume: "GallonsUS", mass: "Pounds",
                 angleFormat: "DDD.MMSS", 
             },
-            "GB": { // United Kingdom
-                distance: "Meters", height: "Meters", temperature: "Celsius", currency: "GBP", // Mixed common usage
+            "GB": { 
+                distance: "Meters", height: "Meters", temperature: "Celsius", currency: "GBP", 
                 pressure: "Millibar", area: "Hectares", volume: "Liters", mass: "Kilograms",
                 angleFormat: "DDD.MMSS", 
             },
-            "CA": { // Canada
+            "CA": { 
                 distance: "Meters", height: "Meters", temperature: "Celsius", currency: "CAD",
                 pressure: "kPa", area: "Hectares", volume: "Liters", mass: "Kilograms",
                 angleFormat: "DDD.MMSS",
             },
-            "AU": { // Australia
+            "AU": { 
                 distance: "Meters", height: "Meters", temperature: "Celsius", currency: "AUD",
                 pressure: "Millibar", area: "Hectares", volume: "Liters", mass: "Kilograms",
                 angleFormat: "DDD.MMSS",
             },
-            "JP": { // Japan
+            "JP": { 
                 distance: "Meters", height: "Meters", temperature: "Celsius", currency: "JPY",
                 pressure: "Millibar", area: "SquareMeters", volume: "Liters", mass: "Kilograms",
                 angleFormat: "DecimalDegrees",
             },
-            "EU": { // Eurozone (general metric)
+            "EU": { 
                 distance: "Meters", height: "Meters", temperature: "Celsius", currency: "EUR",
                 pressure: "Millibar", area: "Hectares", volume: "Liters", mass: "Kilograms",
-                angleFormat: "Grads", // Grads are common in some parts of Europe for surveying
+                angleFormat: "Grads", 
             }
         };
 
-        // --- XML Value Mappings (for SCS900Settings schema) ---
-        const xmlValueMappings = {
-            distance: { "Meters": 0, "Feet": 1, "USSurveyFeet": 1, "Inches": 1, "Centimeters": 0, "Millimeters": 0, "Kilometers": 0, "Yards": 1 }, // Best effort mapping
-            angleFormat: { "DDD.MMSS": 0, "DecimalDegrees": 1, "Grads": 2, "Mils": 0, "Radians": 0 }, // Best effort mapping
-            stationing: { "10+000": 0, "1000.00": 1, "1+000.00_SCS": 2 },
-            coordinateOrder: { "North-East-Elev": 0, "East-North-Elev": 1, "X-Y-Z": 2 },
-            azimuth: { "NorthAzimuth": 0, "SouthAzimuth": 1 },
-            gridDirection: { "ToGridNorth": 0, "FromGridNorthIncN": 1 }
+        // --- XML Value Mappings (ONLY for original SCS900Settings integer-coded fields) ---
+        const xmlSurveyingValueMappings = {
+            // These keys match the original XML schema for surveying settings
+            Distance: { "Meters": 0, "Feet": 1, "USSurveyFeet": 1, "Inches": 1, "Centimeters": 0, "Millimeters": 0, "Kilometers": 0, "Yards": 1 },
+            Angle: { "DDD.MMSS": 0, "DecimalDegrees": 1, "Grads": 2, "Mils": 0, "Radians": 0 }, 
+            Stationing: { "10+000": 0, "1000.00": 1, "1+000.00_SCS": 2 },
+            CoordinateOrder: { "North-East-Elev": 0, "East-North-Elev": 1, "X-Y-Z": 2 },
+            Azimuth: { "NorthAzimuth": 0, "SouthAzimuth": 1 },
+            GridDirection: { "ToGridNorth": 0, "FromGridNorthIncN": 1 }
         };
 
         // --- Helper Functions ---
@@ -464,16 +465,21 @@
         // --- Firebase Functions ---
         async function initializeFirebase() {
             if (!firebaseConfig) {
-                console.error("Firebase configuration is missing.");
-                showNotification("Error", "Firebase configuration is missing. Cannot connect.");
-                uiElements.userIdDisplay.textContent = "Error: Firebase not configured";
+                console.error("Firebase configuration is missing. App functions requiring Firebase will be disabled.");
+                showNotification("Configuration Error", "Firebase configuration is missing. Cannot connect to the database. Settings will not be saved or loaded.");
+                uiElements.userIdDisplay.textContent = "Error: Firebase N/A";
+                // Disable save button if Firebase is not configured
+                uiElements.saveSettingsBtn.disabled = true;
+                uiElements.saveSettingsBtn.title = "Saving disabled: Firebase not configured.";
+                uiElements.saveSettingsBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                updateUI(baseDefaultSettings); // Load defaults if Firebase is unavailable
                 return;
             }
             try {
                 app = initializeApp(firebaseConfig);
                 auth = getAuth(app);
                 db = getFirestore(app);
-                // com.google.firebase.firestore.setLogLevel('debug'); // For verbose logging if needed
+                // com.google.firebase.firestore.setLogLevel('debug'); 
 
                 await setPersistence(auth, browserLocalPersistence);
                 onAuthStateChanged(auth, async (user) => {
@@ -481,6 +487,9 @@
                         currentUserId = user.uid;
                         uiElements.userIdDisplay.textContent = currentUserId;
                         settingsDocRef = doc(db, "artifacts", appId, "users", currentUserId, "preferences", "unitSettingsDoc");
+                        uiElements.saveSettingsBtn.disabled = false;
+                        uiElements.saveSettingsBtn.title = "";
+                        uiElements.saveSettingsBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                         loadSettings(); 
                         attachSettingsListener();
                     } else {
@@ -489,8 +498,12 @@
                 });
             } catch (error) {
                 console.error("Firebase initialization error:", error);
-                showNotification("Firebase Error", `Failed to initialize Firebase: ${error.message}`);
-                uiElements.userIdDisplay.textContent = "Error: Firebase init failed";
+                showNotification("Firebase Error", `Failed to initialize Firebase: ${error.message}. Settings will not be saved or loaded.`);
+                uiElements.userIdDisplay.textContent = "Error: Firebase Init";
+                uiElements.saveSettingsBtn.disabled = true;
+                uiElements.saveSettingsBtn.title = "Saving disabled: Firebase initialization error.";
+                uiElements.saveSettingsBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                updateUI(baseDefaultSettings);
             }
         }
 
@@ -505,9 +518,14 @@
                 console.error("Authentication error:", error);
                 currentUserId = `anon-${crypto.randomUUID()}`; 
                 uiElements.userIdDisplay.textContent = `${currentUserId} (Offline)`;
-                showNotification("Authentication Error", `Could not sign in: ${error.message}. Using temporary offline ID.`);
-                settingsDocRef = doc(db, "artifacts", appId, "users", currentUserId, "preferences", "unitSettingsDoc");
-                updateUI(baseDefaultSettings); // Use base defaults if auth fails and no local data
+                showNotification("Authentication Error", `Could not sign in: ${error.message}. Using temporary offline ID. Settings may not save correctly.`);
+                // Attempt to use a fallback doc ref, though it might not be ideal without proper auth
+                if (db) { // Only if db was initialized before auth error
+                    settingsDocRef = doc(db, "artifacts", appId, "users", currentUserId, "preferences", "unitSettingsDoc");
+                } else {
+                     uiElements.saveSettingsBtn.disabled = true; // db itself failed to init
+                }
+                updateUI(baseDefaultSettings); 
             }
         }
         
@@ -517,7 +535,6 @@
                     uiElements[key].value = settings[key];
                 }
             }
-            // Update preset UI
             updateMeasurementPresetButtons(settings.activeMeasurementPreset);
             if (uiElements.regionPresetSelect && settings.activeRegionPreset !== undefined) {
                  uiElements.regionPresetSelect.value = settings.activeRegionPreset;
@@ -526,7 +543,7 @@
 
         async function loadSettings() {
             if (!settingsDocRef) {
-                console.warn("SettingsDocRef not available for loading settings. Using base defaults.");
+                console.warn("SettingsDocRef not available for loading settings (e.g. Firebase not configured or auth issue). Using base defaults.");
                 updateUI(baseDefaultSettings);
                 return;
             }
@@ -535,14 +552,11 @@
                 if (docSnap.exists()) {
                     const loadedData = docSnap.data();
                     console.log("Settings loaded from Firestore:", loadedData);
-                    // Merge with defaults to ensure all fields are present if schema changed
                     const mergedSettings = { ...baseDefaultSettings, ...loadedData };
                     updateUI(mergedSettings);
                 } else {
                     console.log("No settings found in Firestore, using base default settings.");
                     updateUI(baseDefaultSettings);
-                    // Optionally save base default settings to Firestore for new users
-                    // await saveCurrentSettings(baseDefaultSettings, false); 
                 }
             } catch (error) {
                 console.error("Error loading settings:", error);
@@ -581,21 +595,19 @@
             if (presetType === "measurement") {
                 presetData = measurementSystemPresets[presetKey] || {};
                 newActiveMeasurementPreset = presetKey;
-                newActiveRegionPreset = ''; // Clear region preset if measurement system is chosen
+                newActiveRegionPreset = ''; 
                 uiElements.regionPresetSelect.value = ''; 
             } else if (presetType === "region") {
                 presetData = regionPresets[presetKey] || {};
                 newActiveRegionPreset = presetKey;
-                newActiveMeasurementPreset = null; // Clear measurement preset if region is chosen
+                newActiveMeasurementPreset = null; 
             }
             
-            // Get current settings to merge with preset
             const currentSettings = getCurrentUiSettings();
             const updatedSettings = { ...currentSettings, ...presetData, activeMeasurementPreset: newActiveMeasurementPreset, activeRegionPreset: newActiveRegionPreset };
             
-            updateUI(updatedSettings); // Update UI immediately
-            updateMeasurementPresetButtons(newActiveMeasurementPreset); // Explicitly update buttons
-            // saveCurrentSettings(updatedSettings, false); // Save after applying preset
+            updateUI(updatedSettings); 
+            updateMeasurementPresetButtons(newActiveMeasurementPreset); 
         }
 
         function getCurrentUiSettings() {
@@ -605,26 +617,25 @@
                     settings[key] = uiElements[key].value;
                 }
             }
-            // Include preset states
             settings.activeMeasurementPreset = uiElements.presetMetricBtn.classList.contains('active') ? 'Metric' : (uiElements.presetImperialBtn.classList.contains('active') ? 'Imperial' : null);
             settings.activeRegionPreset = uiElements.regionPresetSelect.value;
             return settings;
         }
 
-
         async function saveCurrentSettings(settingsToSave = null, showSuccessNotification = true) {
-            if (!settingsDocRef) {
-                showNotification("Error", "Cannot save: User not authenticated or Firestore not ready.");
+            if (!settingsDocRef || !currentUserId || uiElements.saveSettingsBtn.disabled) { // Check disabled state too
+                showNotification("Error", "Cannot save settings: User not authenticated, Firestore not ready, or saving is disabled.");
+                console.error("Save attempt failed: settingsDocRef or currentUserId missing, or saving disabled.");
                 return;
             }
 
             const dataToSave = settingsToSave ? settingsToSave : getCurrentUiSettings();
             
             try {
-                await setDoc(settingsDocRef, dataToSave, { merge: true }); // Use merge to avoid overwriting fields not in UI
+                await setDoc(settingsDocRef, dataToSave, { merge: true }); 
                 console.log("Settings saved to Firestore:", dataToSave);
                 if (showSuccessNotification) {
-                    showNotification("Success", "Settings saved successfully!");
+                    showNotification("Success", "All settings saved successfully!");
                 }
             } catch (error) {
                 console.error("Error saving settings:", error);
@@ -634,37 +645,66 @@
 
         function generateXml() {
             const currentSettings = getCurrentUiSettings();
-            let xmlString = '<SCS900Settings>\n  <group>\n    <name>Units</name>\n';
-            const settingsForXml = [
-                { keyName: "Distance", uiKey: "distance" }, { keyName: "Angle", uiKey: "angleFormat" },
-                { keyName: "Stationing", uiKey: "stationing" }, { keyName: "CoordinateOrder", uiKey: "coordinateOrder" },
-                { keyName: "Azimuth", uiKey: "azimuth" }, { keyName: "GridDirection", uiKey: "gridDirection" }
+            let xmlString = '<ProjectSettings>\n  <group>\n    <name>Units</name>\n';
+
+            // General Settings (as Strings)
+            const generalSettingsForXml = [
+                { xmlKey: "GeneralDistanceUnit", uiKey: "distance" },
+                { xmlKey: "GeneralHeightUnit", uiKey: "height" },
+                { xmlKey: "GeneralAngleFormat", uiKey: "angleFormat" },
+                { xmlKey: "TemperatureUnit", uiKey: "temperature" },
+                { xmlKey: "PressureUnit", uiKey: "pressure" },
+                { xmlKey: "GradeUnit", uiKey: "grade" },
+                { xmlKey: "AreaUnit", uiKey: "area" },
+                { xmlKey: "VolumeUnit", uiKey: "volume" },
+                { xmlKey: "MassUnit", uiKey: "mass" },
+                { xmlKey: "CurrencyUnit", uiKey: "currency" }
             ];
 
-            settingsForXml.forEach(item => {
-                const userSelection = currentSettings[item.uiKey]; // e.g., "Meters", "DDD.MMSS"
-                const valueMapCategory = xmlValueMappings[item.uiKey]; // e.g., xmlValueMappings.distance
-                let xmlValue = "0"; // Default
+            generalSettingsForXml.forEach(item => {
+                const userSelection = currentSettings[item.uiKey] || baseDefaultSettings[item.uiKey]; // Fallback to default if undefined
+                xmlString += `    <setting>\n`;
+                xmlString += `      <key>${item.xmlKey}</key>\n`;
+                xmlString += `      <group>Units</group>\n`;
+                xmlString += `      <value>${userSelection}</value>\n`;
+                xmlString += `      <type>System.String</type>\n`;
+                xmlString += `    </setting>\n`;
+            });
+
+            // Surveying Specific Settings (as Integers, using original XML keys)
+            const surveyingSettingsForXml = [
+                { xmlKey: "Distance", uiKey: "distance" }, // Note: This 'Distance' key is from original XML, maps to integer
+                { xmlKey: "Angle", uiKey: "angleFormat" }, // Note: This 'Angle' key is from original XML, maps to integer
+                { xmlKey: "Stationing", uiKey: "stationing" },
+                { xmlKey: "CoordinateOrder", uiKey: "coordinateOrder" },
+                { xmlKey: "Azimuth", uiKey: "azimuth" },
+                { xmlKey: "GridDirection", uiKey: "gridDirection" }
+            ];
+
+            surveyingSettingsForXml.forEach(item => {
+                const userSelection = currentSettings[item.uiKey];
+                const valueMapCategory = xmlSurveyingValueMappings[item.xmlKey];
+                let xmlValue = "0"; // Default if no mapping
 
                 if (valueMapCategory && valueMapCategory[userSelection] !== undefined) {
                     xmlValue = valueMapCategory[userSelection];
                 } else {
-                    console.warn(`XML mapping for ${item.keyName} ('${userSelection}') not found or not applicable. Defaulting to 0.`);
-                    // Attempt to find a fallback if the category exists but the specific value doesn't
-                    if (valueMapCategory) { 
+                    console.warn(`XML mapping for Surveying ${item.xmlKey} ('${userSelection}') not found. Defaulting to 0.`);
+                    if (valueMapCategory) {
                         const firstKey = Object.keys(valueMapCategory)[0];
-                        if (firstKey) xmlValue = valueMapCategory[firstKey]; // Default to the first available mapping's value
+                        if (firstKey) xmlValue = valueMapCategory[firstKey];
                     }
                 }
                 
                 xmlString += `    <setting>\n`;
-                xmlString += `      <key>${item.keyName}</key>\n`;
-                xmlString += `      <group>Units</group>\n`;
+                xmlString += `      <key>${item.xmlKey}</key>\n`;
+                xmlString += `      <group>Units</group>\n`; // Keep group as "Units" for consistency with original schema part
                 xmlString += `      <value>${xmlValue}</value>\n`;
                 xmlString += `      <type>System.Int32</type>\n`;
                 xmlString += `    </setting>\n`;
             });
-            xmlString += '  </group>\n</SCS900Settings>';
+
+            xmlString += '  </group>\n</ProjectSettings>';
             return xmlString;
         }
 
@@ -676,7 +716,7 @@
             document.body.appendChild(element);
             element.click();
             document.body.removeChild(element);
-            showNotification("Success", "Surveying XML file exported!");
+            showNotification("Success", `${filename} exported successfully!`);
         }
 
         // --- Event Listeners ---
@@ -685,20 +725,18 @@
         uiElements.regionPresetSelect.addEventListener('change', (e) => {
             if (e.target.value) {
                 applyPreset(e.target.value, 'region');
-            } else { // "-- Select Region --" chosen
-                // Optionally clear measurement preset or do nothing
+            } else { 
                 updateMeasurementPresetButtons(null); 
-                // Potentially save this "no active region" state
                 const currentSettings = getCurrentUiSettings();
                 currentSettings.activeRegionPreset = '';
-                updateUI(currentSettings); // Reflect clearing in UI
+                updateUI(currentSettings); 
             }
         });
 
         uiElements.saveSettingsBtn.addEventListener('click', () => saveCurrentSettings(null, true));
         uiElements.exportXmlBtn.addEventListener('click', () => {
             const xmlData = generateXml();
-            downloadXml('SCS900Settings.xml', xmlData);
+            downloadXml('ProjectSettings.xml', xmlData); // Changed filename
         });
         uiElements.modalCloseButton.addEventListener('click', hideNotification);
 
